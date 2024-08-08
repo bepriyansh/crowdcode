@@ -45,11 +45,11 @@ io.on("connection", (socket) => {
   socket.on(ACTIONS.SYNC_CODE, ({ socketId, code }) => {
     io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
   });
-  socket.on(ACTIONS.RUN_CODE, ({roomId, code, language}) =>{
-    console.log(code,language);
-    const output = compileRun(code, language);
-    console.log("output : ",output);
-    io.to(roomId).emit(ACTIONS.RUN_CODE, {output});
+
+  
+  socket.on(ACTIONS.RUN_CODE, async ({ roomId, code, language }) => {
+    const output = await compileRun(code, language);
+    io.to(roomId).emit(ACTIONS.RUN_CODE, { output });
   })
 
   // leave room

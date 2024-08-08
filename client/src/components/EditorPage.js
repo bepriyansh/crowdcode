@@ -61,6 +61,11 @@ function EditorPage() {
           return prev.filter((client) => client.socketId !== socketId);
         });
       });
+
+      // getting code output
+      socketRef.current.on(ACTIONS.RUN_CODE, ({ output }) => {
+        console.log("output : ", output)
+      })
     };
     init();
 
@@ -91,9 +96,7 @@ function EditorPage() {
   };
 
   const runcode = async () => {
-    console.log(codeRef.current);
-    socketRef.current.emit(ACTIONS.RUN_CODE, {roomId, code:codeRef.current, language:"node"})
-    console.log("RUN CODE")
+    socketRef.current.emit(ACTIONS.RUN_CODE, { roomId, code: codeRef.current, language: "node" })
   }
   return (
     <div className="container-fluid vh-100">
