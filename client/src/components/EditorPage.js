@@ -20,6 +20,9 @@ function EditorPage() {
   const { roomId } = useParams();
 
   const socketRef = useRef(null);
+
+  const languages = ["c", "cpp", "node", "python", "java"];
+  const [language, setLanguage] = useState("python");
   useEffect(() => {
     const init = async () => {
       socketRef.current = await initSocket();
@@ -66,6 +69,10 @@ function EditorPage() {
       socketRef.current.on(ACTIONS.RUN_CODE, ({ output }) => {
         console.log("output : ", output)
       })
+
+      socketRef.current.on(ACTIONS.CHANGE_LANG, ({ language }) => {
+        setLanguage(language);
+      })
     };
     init();
 
@@ -74,6 +81,8 @@ function EditorPage() {
       socketRef.current && socketRef.current.disconnect();
       socketRef.current.off(ACTIONS.JOINED);
       socketRef.current.off(ACTIONS.DISCONNECTED);
+      socketRef.current.off(ACTIONS.RUN_CODE);
+      socketRef.current.off(ACTIONS.CHANGE_LANG);
     };
   }, []);
 
@@ -96,65 +105,102 @@ function EditorPage() {
   };
 
   const runcode = async () => {
-    socketRef.current.emit(ACTIONS.RUN_CODE, { roomId, code: codeRef.current, language: "node" })
+    socketRef.current.emit(ACTIONS.RUN_CODE, { roomId, code: codeRef.current, language: language })
   }
-  return (
-    <div className="container-fluid vh-100">
-      <div className="row h-100">
-        {/* client panel */}
-        <div
-          className="col-md-2 bg-dark text-light d-flex flex-column h-100"
-          style={{ boxShadow: "2px 0px 4px rgba(0, 0, 0, 0.1)" }}
-        >
-          <img
-            src="/images/codecast.png"
-            alt="Logo"
-            className="img-fluid mx-auto"
-            style={{ maxWidth: "150px", marginTop: "-43px" }}
-          />
-          <hr style={{ marginTop: "-3rem" }} />
+  const changeLang = (e) => {
+    setLanguage(e.target.value);
+    socketRef.current.emit(ACTIONS.CHANGE_LANG, { roomId, language: e.target.value });
+  }
+  return <div className="flex flex-col w-full h-full">
+    <div className="text-white border-white border">
+      <div className="border-white border flex">Tag 1</div>
+      <div className="border-white border flex">Tag 1</div>
+      <div className="border-white border flex">Tag 1</div>
 
-          {/* Client list container */}
-          <div className="d-flex flex-column flex-grow-1 overflow-auto">
-            <span className="mb-2">Members</span>
-            {clients.map((client) => (
-              <Client key={client.socketId} username={client.username} />
-            ))}
-          </div>
-
-          <hr />
-          {/* Buttons */}
-          <div className="mt-auto ">
-            <button className="btn btn-success" onClick={copyRoomId}>
-              Copy Room ID
-            </button>
-            <button
-              className="btn btn-danger mt-2 mb-2 px-3 btn-block"
-              onClick={leaveRoom}
-            >
-              Leave Room
-            </button>
-          </div>
+      {/* <div className="flex px-4 py-3">DheetCode</div>
+      <div className=" border-white border">
+        help
+        <select value={language} onChange={changeLang} className="mt-1 flex py-2 px-3 border border-gray-300 bg-white rounded-lg  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          {languages.map((lang, i) => (<option value={lang} key={i}>{lang}</option>))}
+        </select>
+        <div className="flex border border-white max-w-[120px]">
+          <button className="btn btn-danger mt-2 mb-2 px-3 max-w-[80px] btn-block" onClick={runcode}>Run</button>
         </div>
-
-        {/* Editor panel */}
-        <div className="col-md-10 text-light d-flex flex-column h-100 ">
-          {/* <div className="w-full h-50 bg-red-300"></div> */}
-          hehe
-          <Editor
-            socketRef={socketRef}
-            roomId={roomId}
-            onCodeChange={(code) => {
-              codeRef.current = code;
-            }}
-          />
-          <div className="max-w-[120px]">
-            <button className="btn btn-danger mt-2 mb-2 px-3 max-w-[80px] btn-block" onClick={runcode}>Run</button>
-          </div>
-        </div>
-      </div>
+      </div> */}
     </div>
-  );
+    {/* <Editor
+      socketRef={socketRef}
+      roomId={roomId}
+      onCodeChange={(code) => {
+        codeRef.current = code;
+      }}
+    /> */}
+
+  </div>
 }
 
 export default EditorPage;
+
+
+// const chutiyaCode = () => {
+//   return <div className="container-fluid vh-100">
+//     <div className="row h-100">
+//       {/* client panel */}
+//       <div
+//         className="col-md-2 bg-dark text-light d-flex flex-column h-100"
+//         style={{ boxShadow: "2px 0px 4px rgba(0, 0, 0, 0.1)" }}
+//       >
+//         <img
+//           src="/images/codecast.png"
+//           alt="Logo"
+//           className="img-fluid mx-auto"
+//           style={{ maxWidth: "150px", marginTop: "-43px" }}
+//         />
+//         <hr style={{ marginTop: "-3rem" }} />
+
+//         {/* Client list container */}
+//         <div className="d-flex flex-column flex-grow-1 overflow-auto">
+//           <span className="mb-2">Members</span>
+//           {clients.map((client) => (
+//             <Client key={client.socketId} username={client.username} />
+//           ))}
+//         </div>
+
+//         <hr />
+//         {/* Buttons */}
+//         <div className="mt-auto ">
+//           <button className="btn btn-success" onClick={copyRoomId}>
+//             Copy Room ID
+//           </button>
+//           <button
+//             className="btn btn-danger mt-2 mb-2 px-3 btn-block"
+//             onClick={leaveRoom}
+//           >
+//             Leave Room
+//           </button>
+//         </div>
+//       </div>
+
+//       {/* Editor panel */}
+//       <div className="col-md-10 text-light d-flex flex-column h-100 ">
+//         <div className="flex w-full p-2">
+//           <select value={language} onChange={changeLang} className="mt-1 flex py-2 px-3 border border-gray-300 bg-white rounded-lg  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+//             {languages.map((lang, i) => (<option value={lang} key={i}>{lang}</option>))}
+//           </select>
+//           <div className="flex border border-white max-w-[120px]">
+//             <button className="btn btn-danger mt-2 mb-2 px-3 max-w-[80px] btn-block" onClick={runcode}>Run</button>
+//           </div>
+//         </div>
+
+//         <Editor
+//           socketRef={socketRef}
+//           roomId={roomId}
+//           onCodeChange={(code) => {
+//             codeRef.current = code;
+//           }}
+//         />
+
+//       </div>
+//     </div>
+//   </div>
+// }

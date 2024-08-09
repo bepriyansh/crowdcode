@@ -7,7 +7,7 @@ const compileRun = (code, language) => {
         outputPromise = c.runSource(code);
     } else if (language == "cpp") {
         outputPromise = cpp.runSource(code);
-    } else if (language == "node") {
+    } else if (language == "javascript") {
         outputPromise = node.runSource(code);
     } else if (language == "python") {
         outputPromise = python.runSource(code);

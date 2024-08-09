@@ -27,6 +27,7 @@ io.on("connection", (socket) => {
     userSocketMap[socket.id] = username;
     socket.join(roomId);
     const clients = getAllConnectedClients(roomId);
+    console.log("Joined : ", roomId, username, clients);
     // notify that new user join
     clients.forEach(({ socketId }) => {
       io.to(socketId).emit(ACTIONS.JOINED, {
@@ -39,17 +40,22 @@ io.on("connection", (socket) => {
 
   // sync the code
   socket.on(ACTIONS.CODE_CHANGE, ({ roomId, code }) => {
-    socket.in(roomId).emit(ACTIONS.CODE_CHANGE, { code });
+    console.log("CHANGE_CODE", roomId, code)
+    socket.in(roomId).emit(ACTIONS.CODE_CHANGE, { newCode: code });
   });
   // when new user join the room all the code which are there are also shows on that persons editor
-  socket.on(ACTIONS.SYNC_CODE, ({ socketId, code }) => {
-    io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
+  socket.on(ACTIONS.SYNC_CODE_REQ, ({ socketId }) => {
+    io.to(socketId).emit(ACTIONS.SYNC_CODE_RES);
   });
 
-  
+
   socket.on(ACTIONS.RUN_CODE, async ({ roomId, code, language }) => {
     const output = await compileRun(code, language);
     io.to(roomId).emit(ACTIONS.RUN_CODE, { output });
+  })
+
+  socket.on(ACTIONS.CHANGE_LANG, ({ roomId, language }) => {
+    io.to(roomId).emit(ACTIONS.CHANGE_LANG, { language });
   })
 
   // leave room
