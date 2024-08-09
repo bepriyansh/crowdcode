@@ -93,7 +93,7 @@ const Page: React.FC = () => {
                     ACTIONS.JOINED,
                     ({ clients, username, socketId, roomCode }: JoiningDataType) => {
                         if (username !== data.username) {
-                            toast.success(`${data.username} joined the room.`);
+                            toast.success(`${username} joined the room.`);
                         }
                         setClients(clients);
                         setLanguage(roomCode.lang);
@@ -114,6 +114,7 @@ const Page: React.FC = () => {
                 });
 
                 socketRef.current.on(ACTIONS.CODE_CHANGE, ({ updatedCode }: { updatedCode: string }) => {
+                    console.log(updatedCode)
                     setCode(updatedCode)
                 });
 

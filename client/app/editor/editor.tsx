@@ -45,6 +45,7 @@ const Editor: React.FC<EditorProps> = ({ socketRef, roomId, code, language, setC
             height="100%"
             width="100%"
             onMount={onMount}
+            defaultValue={code}
             value={code}
             onChange={onChange}
         />

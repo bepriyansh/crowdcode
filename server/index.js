@@ -53,6 +53,7 @@ io.on("connection", (socket) => {
   // sync the code
   socket.on(ACTIONS.CODE_CHANGE, ({ roomId, newCode }) => {
     roomCodeMap[roomId].code = newCode;
+    console.log(newCode)
     socket.in(roomId).emit(ACTIONS.CODE_CHANGE, { updatedCode: newCode });
   });
 
