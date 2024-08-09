@@ -41,7 +41,7 @@ const Page = () => {
   return (
     <div className='flex justify-center items-center w-full h-full'>
       <div className='flex flex-col justify-center items-center w-full max-w-[600px] gap-3 m-3 p-5 border rounded-xl text-center bg-slate-700/5 shadow'>
-        <div className='text-xl'>LOGO</div>
+        <div className='text-xl text-primary'>CrowD Code</div>
         <div className='text-3xl my-2'>Enter the Room Id</div>
         <Input placeholder='Room Id' value={roomId} onChange={(e) => setRoomId(e.target.value)} onKeyUp={handleInputEnter} />
         <Input placeholder='Username' value={username} onChange={(e) => setUsername(e.target.value)} onKeyUp={handleInputEnter} />
