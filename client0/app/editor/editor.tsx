@@ -3,6 +3,7 @@ import { CodeiumEditor } from "@codeium/react-code-editor";
 import { ACTIONS } from '../../lib/Actions';
 import * as monaco from 'monaco-editor'; // Import monaco editor types if needed
 import { Socket } from 'socket.io-client';
+import { useTheme } from "next-themes"
 
 interface EditorProps {
     socketRef: Socket | null;
@@ -13,6 +14,7 @@ interface EditorProps {
 }
 
 const Editor: React.FC<EditorProps> = ({ socketRef, roomId, code, language, setCode }) => {
+    const { theme } = useTheme()
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
     const onMount = (editor: monaco.editor.IStandaloneCodeEditor, monacoInstance: typeof monaco) => {
@@ -25,11 +27,11 @@ const Editor: React.FC<EditorProps> = ({ socketRef, roomId, code, language, setC
             setCode(value);
         }
     };
-    
+
     useEffect(() => {
         const codeVal = editorRef.current?.getValue();
         if (codeVal && socketRef) {
-            socketRef.emit(ACTIONS.CODE_CHANGE, { roomId, code: codeVal });
+            socketRef.emit(ACTIONS.CODE_CHANGE, { roomId, newCode: codeVal });
             return () => {
                 socketRef.off(ACTIONS.CODE_CHANGE);
             };
@@ -39,7 +41,7 @@ const Editor: React.FC<EditorProps> = ({ socketRef, roomId, code, language, setC
     return (
         <CodeiumEditor
             language={language}
-            theme="vs-dark"
+            theme={theme === "dark" ? "vs-dark" : "light"}
             height="100%"
             width="100%"
             onMount={onMount}

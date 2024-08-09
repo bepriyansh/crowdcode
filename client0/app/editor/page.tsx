@@ -30,6 +30,24 @@ interface Client {
     username: string;
 }
 
+interface JoiningDataType {
+    clients: Client[];
+    username: string;
+    socketId: string;
+    roomCode: {
+        lang: string,
+        code: string,
+        output: {
+            cpuUsage: number,
+            exitCode: number,
+            memoryUsage: number,
+            signal: number,
+            stderr: string,
+            stdout: string
+        }
+    }
+}
+
 const Page: React.FC = () => {
     const searchParams = useSearchParams();
     const data = {
@@ -38,14 +56,10 @@ const Page: React.FC = () => {
     }
     const socketRef = useRef<Socket | null>(null);
     const [clients, setClients] = useState<Client[]>([]);
-    const [code, setCode] = useState<string>(`
-        for(let i = 0; i < 1000; i++) {
-                console.log(i);
-        }
-        `);
+    const [code, setCode] = useState<string>("for(let i = 0; i < 5; i++) console.log(i);");
     const [language, setLanguage] = useState<string>('javascript');
     const languages: string[] = ['c', 'cpp', 'javascript', 'python', 'java'];
-    const [codeOutput, setCodeOutput] = useState<string>('Run Code to see output');
+    const [codeOutput, setCodeOutput] = useState<string>('Run Code to see output.');
 
     const router = useRouter();
 
@@ -70,14 +84,15 @@ const Page: React.FC = () => {
 
                 socketRef.current.on(
                     ACTIONS.JOINED,
-                    ({ clients, username, socketId }: { clients: Client[]; username: string; socketId: string }) => {
-                        console.log("JOINED", clients)
+                    ({ clients, username, socketId, roomCode }: JoiningDataType) => {
                         if (username !== data.username) {
                             toast.success(`${data.username} joined the room.`);
                         }
                         setClients(clients);
-
-                        socketRef.current?.emit(ACTIONS.SYNC_CODE_REQ, { socketId });
+                        setLanguage(roomCode.lang);
+                        setCode(roomCode.code);
+                        if (roomCode.output.stdout !== "") setCodeOutput(roomCode.output.stdout);
+                        else if (roomCode.output.stderr !== "") setCodeOutput(roomCode.output.stderr);
                     }
                 );
 
@@ -86,17 +101,13 @@ const Page: React.FC = () => {
                     setClients((prev) => prev.filter((client) => client.socketId !== socketId));
                 });
 
-                socketRef.current.on(ACTIONS.SYNC_CODE_RES, () => {
-                    if (code) socketRef.current?.emit(ACTIONS.CODE_CHANGE, { roomId: data.roomId, code });
-                })
                 socketRef.current.on(ACTIONS.RUN_CODE, ({ output }: { output: any }) => {
-                    console.log('output : ', output);
-
-                    setCodeOutput(output.stdout)
+                    if (output.stdout !== "") setCodeOutput(output.stdout);
+                    else if (output.stderr !== "") setCodeOutput(output.stderr);
                 });
 
-                socketRef.current.on(ACTIONS.CODE_CHANGE, ({ newCode }: { newCode: string }) => {
-                    setCode(newCode)
+                socketRef.current.on(ACTIONS.CODE_CHANGE, ({ updatedCode }: { updatedCode: string }) => {
+                    setCode(updatedCode)
                 });
 
                 socketRef.current.on(ACTIONS.CHANGE_LANG, ({ language }: { language: string }) => {
