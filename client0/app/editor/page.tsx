@@ -151,15 +151,15 @@ const Page: React.FC = () => {
 
     return (
         <div className="flex h-[calc(100vh-58px)] w-full">
-            <div className="flex flex-col justify-between items-center border-r w-20 py-2 gap-2">
-                <div className="flex flex-col justify-start items-center gap-2">
+            <div className="flex flex-col justify-between items-center border-r w-20 gap-2">
+                <div className="flex flex-col w-full justify-start items-center gap-2 overflow-y-auto py-2 ">
                     {clients.map((client, i) => <div key={i}>
                         <Avatar>
                             <AvatarFallback>{client.username[0]}</AvatarFallback>
                         </Avatar>
                     </div>)}
                 </div>
-                <Button onClick={copyRoomId} variant="outline" size="icon"><Copy /></Button>
+                <Button onClick={copyRoomId} variant="outline" size="icon" className='m-2'><Copy /></Button>
             </div>
             <div className="flex-grow">
                 <ResizablePanelGroup direction="vertical" className="min-h-[200px] w-full">
