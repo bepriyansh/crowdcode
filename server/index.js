@@ -6,7 +6,6 @@ const ACTIONS = require("./Actions");
 const compileRun = require("./utils/compileRun");
 
 const server = http.createServer(app);
-
 const io = new Server(server);
 
 const userSocketMap = {};
@@ -77,6 +76,12 @@ io.on("connection", (socket) => {
         socketId: socket.id,
         username: userSocketMap[socket.id],
       });
+      
+      // If the room is empty, delete the roomCode
+      const remainingClients = getAllConnectedClients(roomId);
+      if (remainingClients.length === 0) {
+        delete roomCodeMap[roomId];
+      }
     });
 
     delete userSocketMap[socket.id];

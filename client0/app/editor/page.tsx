@@ -97,7 +97,7 @@ const Page: React.FC = () => {
                 );
 
                 socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username }: { socketId: string; username: string }) => {
-                    toast.success(`${username} left the room`);
+                    toast.success(`${username !== data.username ? username : "You"} left the room`);
                     setClients((prev) => prev.filter((client) => client.socketId !== socketId));
                 });
 
