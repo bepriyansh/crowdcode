@@ -63,7 +63,14 @@ const Page: React.FC = () => {
 
     const router = useRouter();
 
+    // to stop reinitialization of connection, we've added this ref
+    const initialized = useRef(false);
     useEffect(() => {
+        if (!initialized.current) {
+            initialized.current = true;
+            console.log("i fire once")
+
+            
         const init = async () => {
             socketRef.current = await initSocket();
 
@@ -122,13 +129,17 @@ const Page: React.FC = () => {
         return () => {
             if (socketRef.current) {
                 socketRef.current.disconnect();
+                socketRef.current.off(ACTIONS.JOIN);
                 socketRef.current.off(ACTIONS.JOINED);
                 socketRef.current.off(ACTIONS.DISCONNECTED);
                 socketRef.current.off(ACTIONS.RUN_CODE);
+                socketRef.current.off(ACTIONS.CODE_CHANGE);
                 socketRef.current.off(ACTIONS.CHANGE_LANG);
             }
         };
-    }, []);
+        }
+    }, [])
+
 
     const copyRoomId = async () => {
         try {

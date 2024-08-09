@@ -32,7 +32,7 @@ io.on("connection", (socket) => {
     if (!roomCodeMap[roomId]) {
       roomCodeMap[roomId] = {
         lang: "javascript",
-        code: `for(let i = 0; i < 5; i++) console.log(i,"Loda Lassan");`,
+        code: `for(let i = 0; i < 5; i++) console.log(i);`,
         output: "Run Code to see output."
       };
     }
@@ -76,7 +76,7 @@ io.on("connection", (socket) => {
         socketId: socket.id,
         username: userSocketMap[socket.id],
       });
-      
+
       // If the room is empty, delete the roomCode
       const remainingClients = getAllConnectedClients(roomId);
       if (remainingClients.length === 0) {
