@@ -51,10 +51,11 @@ io.on("connection", (socket) => {
   });
 
   // sync the code
-  socket.on(ACTIONS.CODE_CHANGE, ({ roomId, newCode }) => {
-    roomCodeMap[roomId].code = newCode;
-    console.log(newCode)
-    socket.in(roomId).emit(ACTIONS.CODE_CHANGE, { updatedCode: newCode });
+  socket.on(ACTIONS.CODE_CHANGE, ({ roomId, user, newCode }) => {
+    if (roomCodeMap[roomId]) roomCodeMap[roomId].code = newCode;
+    const data = { updatedCode: newCode, user};
+    console.log("CODE_CHANGE : ", data)
+    socket.in(roomId).emit(ACTIONS.CODE_CHANGE, data);
   });
 
   socket.on(ACTIONS.RUN_CODE, async ({ roomId, code, language }) => {
@@ -77,12 +78,6 @@ io.on("connection", (socket) => {
         socketId: socket.id,
         username: userSocketMap[socket.id],
       });
-
-      // If the room is empty, delete the roomCode
-      const remainingClients = getAllConnectedClients(roomId);
-      if (remainingClients.length === 0) {
-        delete roomCodeMap[roomId];
-      }
     });
 
     delete userSocketMap[socket.id];

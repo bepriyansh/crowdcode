@@ -23,6 +23,12 @@ import {
 } from "@/components/ui/select"
 import { ACTIONS } from '@/lib/Actions';
 import { Copy } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface Client {
     socketId: string;
@@ -49,7 +55,7 @@ interface JoiningDataType {
 
 const Page: React.FC = () => {
     const searchParams = useSearchParams();
-    
+
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <ActualPage searchParams={searchParams} />
@@ -70,6 +76,10 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
     const [codeOutput, setCodeOutput] = useState<string>('Run Code to see output.');
 
     const router = useRouter();
+
+    // To manage typing users
+    const [typingUsers, setTypingUsers] = useState<string[]>([]);
+    const typingTimeouts = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
     // to stop reinitialization of connection, we've added this ref
     const initialized = useRef(false);
@@ -121,9 +131,23 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
                         else if (output.stderr !== "") setCodeOutput(output.stderr);
                     });
 
-                    socketRef.current.on(ACTIONS.CODE_CHANGE, ({ updatedCode }: { updatedCode: string }) => {
-                        console.log(updatedCode)
-                        setCode(updatedCode)
+                    socketRef.current.on(ACTIONS.CODE_CHANGE, ({ updatedCode, user }: { updatedCode: string, user: string }) => {
+                        // Add user to typingUsers list
+                        if (!typingUsers.includes(user)) {
+                            setTypingUsers((prev) => [...prev, user]);
+                        }
+
+                        // Clear any existing timeout for this user
+                        if (typingTimeouts.current[user]) {
+                            clearTimeout(typingTimeouts.current[user]);
+                        }
+
+                        // Set a timeout to remove the user after 1 second of inactivity
+                        typingTimeouts.current[user] = setTimeout(() => {
+                            setTypingUsers((prev) => prev.filter((u) => u !== user));
+                        }, 1000);
+
+                        setCode(updatedCode);
                     });
 
                     socketRef.current.on(ACTIONS.CHANGE_LANG, ({ language }: { language: string }) => {
@@ -145,9 +169,12 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
                     socketRef.current.off(ACTIONS.CODE_CHANGE);
                     socketRef.current.off(ACTIONS.CHANGE_LANG);
                 }
+
+                // Clean up typing timeouts
+                Object.values(typingTimeouts.current).forEach(clearTimeout);
             };
         }
-    }, [data.roomId, data.username, router])
+    }, [data.roomId, data.username, router, typingUsers])
 
 
     const copyRoomId = async () => {
@@ -172,12 +199,29 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
     return (
         <div className="flex h-[calc(100vh-58px)] w-full">
             <div className="flex flex-col justify-between items-center border-r w-20 gap-2">
-                <div className="flex flex-col w-full justify-start items-center gap-2 overflow-y-auto py-2 ">
-                    {clients.map((client, i) => <div key={i}>
-                        <Avatar>
-                            <AvatarFallback>{client.username[0]}</AvatarFallback>
-                        </Avatar>
-                    </div>)}
+                <div className="flex flex-col w-full h-full justify-start items-center gap-5 overflow-y-auto py-2 ">
+                    {clients.map((client, i) =>
+                        <TooltipProvider key={i}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className='relative cursor-pointer'>
+                                        <Avatar>
+                                            <AvatarFallback>{client.username[0].toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        {/* Indicate typing status */}
+                                        {typingUsers.includes(client.username) && (
+                                            <div className='absolute z-10 right-[-12px] bottom-[-15px] bg-slate-500/50 text-[10px] rounded-lg p-1'>
+                                                typing...
+                                            </div>
+                                        )}
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{client.username}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                 </div>
                 <Button onClick={copyRoomId} variant="outline" size="icon" className='m-2'><Copy /></Button>
             </div>
@@ -185,7 +229,7 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
                 <ResizablePanelGroup direction="vertical" className="min-h-[200px] w-full">
                     <ResizablePanel defaultSize={80}>
                         <div className="flex h-full">
-                            <Editor socketRef={socketRef.current} roomId={data.roomId} code={code} language={language} setCode={setCode} />
+                            <Editor socketRef={socketRef.current} roomId={data.roomId} code={code} language={language} user={data.username} setCode={setCode} />
                         </div>
                     </ResizablePanel>
                     <ResizableHandle />

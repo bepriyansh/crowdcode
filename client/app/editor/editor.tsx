@@ -10,10 +10,11 @@ interface EditorProps {
     roomId: string;
     code: string;
     language: string;
+    user: string;
     setCode: (code: string) => void;
 }
 
-const Editor: React.FC<EditorProps> = ({ socketRef, roomId, code, language, setCode }) => {
+const Editor: React.FC<EditorProps> = ({ socketRef, roomId, code, language, user, setCode }) => {
     const { theme } = useTheme()
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
@@ -25,18 +26,11 @@ const Editor: React.FC<EditorProps> = ({ socketRef, roomId, code, language, setC
     const onChange = (value: string | undefined, ev: monaco.editor.IModelContentChangedEvent) => {
         if (value !== undefined) {
             setCode(value);
+            if(socketRef){
+                socketRef.emit(ACTIONS.CODE_CHANGE, { roomId, user, newCode: value });
+            }
         }
     };
-
-    const codeVal = editorRef.current?.getValue();
-    useEffect(() => {
-        if (codeVal && socketRef) {
-            socketRef.emit(ACTIONS.CODE_CHANGE, { roomId, newCode: codeVal });
-            return () => {
-                socketRef.off(ACTIONS.CODE_CHANGE);
-            };
-        }
-    }, [codeVal, roomId, socketRef])
 
     return (
         <CodeiumEditor
