@@ -28,15 +28,15 @@ const Editor: React.FC<EditorProps> = ({ socketRef, roomId, code, language, setC
         }
     };
 
+    const codeVal = editorRef.current?.getValue();
     useEffect(() => {
-        const codeVal = editorRef.current?.getValue();
         if (codeVal && socketRef) {
             socketRef.emit(ACTIONS.CODE_CHANGE, { roomId, newCode: codeVal });
             return () => {
                 socketRef.off(ACTIONS.CODE_CHANGE);
             };
         }
-    }, [editorRef.current?.getValue(), roomId, socketRef])
+    }, [codeVal, roomId, socketRef])
 
     return (
         <CodeiumEditor

@@ -90,5 +90,7 @@ io.on("connection", (socket) => {
   });
 });
 
+app.get("/", (req, res) => res.send("Hello world"));
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server is runnint on port ${PORT}`));

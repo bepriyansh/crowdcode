@@ -47,7 +47,7 @@ const Page = () => {
         <Input placeholder='Username' value={username} onChange={(e) => setUsername(e.target.value)} onKeyUp={handleInputEnter} />
         <Button onClick={joinRoom}>Join</Button>
         <div className='flex flex-row items-center justify-center'>
-          <p>Don't have a room ?</p>
+          <p>Don&apos;t have a room ?</p>
           <Button variant="link" onClick={generateRoomId}>new room</Button>
         </div>
       </div>

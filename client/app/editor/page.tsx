@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
     ResizableHandle,
@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select"
 import { ACTIONS } from '@/lib/Actions';
 import { Copy } from 'lucide-react';
-
 
 interface Client {
     socketId: string;
@@ -50,6 +49,15 @@ interface JoiningDataType {
 
 const Page: React.FC = () => {
     const searchParams = useSearchParams();
+    
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ActualPage searchParams={searchParams} />
+        </Suspense>
+    );
+};
+
+const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }> = ({ searchParams }) => {
     const data = {
         roomId: searchParams.get('roomId') as string,
         username: searchParams.get('username') as string
@@ -70,76 +78,76 @@ const Page: React.FC = () => {
             initialized.current = true;
             console.log("i fire once")
 
-            
-        const init = async () => {
-            socketRef.current = await initSocket();
 
-            const handleErrors = (err: any) => {
-                console.log('Error', err);
-                toast.error('Socket connection failed, Try again later');
-                router.push('/');
+            const init = async () => {
+                socketRef.current = await initSocket();
+
+                const handleErrors = (err: any) => {
+                    console.log('Error', err);
+                    toast.error('Socket connection failed, Try again later');
+                    router.push('/');
+                };
+
+                if (socketRef.current) {
+                    socketRef.current.on('connect_error', handleErrors);
+                    socketRef.current.on('connect_failed', handleErrors);
+
+                    socketRef.current.emit(ACTIONS.JOIN, {
+                        roomId: data.roomId,
+                        username: data.username,
+                    });
+
+                    socketRef.current.on(
+                        ACTIONS.JOINED,
+                        ({ clients, username, socketId, roomCode }: JoiningDataType) => {
+                            if (username !== data.username) {
+                                toast.success(`${username} joined the room.`);
+                            }
+                            setClients(clients);
+                            setLanguage(roomCode.lang);
+                            setCode(roomCode.code);
+                            if (roomCode.output.stdout !== "") setCodeOutput(roomCode.output.stdout);
+                            else if (roomCode.output.stderr !== "") setCodeOutput(roomCode.output.stderr);
+                        }
+                    );
+
+                    socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username }: { socketId: string; username: string }) => {
+                        toast.success(`${username !== data.username ? username : "You"} left the room`);
+                        setClients((prev) => prev.filter((client) => client.socketId !== socketId));
+                    });
+
+                    socketRef.current.on(ACTIONS.RUN_CODE, ({ output }: { output: any }) => {
+                        if (output.stdout !== "") setCodeOutput(output.stdout);
+                        else if (output.stderr !== "") setCodeOutput(output.stderr);
+                    });
+
+                    socketRef.current.on(ACTIONS.CODE_CHANGE, ({ updatedCode }: { updatedCode: string }) => {
+                        console.log(updatedCode)
+                        setCode(updatedCode)
+                    });
+
+                    socketRef.current.on(ACTIONS.CHANGE_LANG, ({ language }: { language: string }) => {
+                        setLanguage(language);
+                    });
+
+                }
             };
 
-            if (socketRef.current) {
-                socketRef.current.on('connect_error', handleErrors);
-                socketRef.current.on('connect_failed', handleErrors);
+            init();
 
-                socketRef.current.emit(ACTIONS.JOIN, {
-                    roomId: data.roomId,
-                    username: data.username,
-                });
-
-                socketRef.current.on(
-                    ACTIONS.JOINED,
-                    ({ clients, username, socketId, roomCode }: JoiningDataType) => {
-                        if (username !== data.username) {
-                            toast.success(`${username} joined the room.`);
-                        }
-                        setClients(clients);
-                        setLanguage(roomCode.lang);
-                        setCode(roomCode.code);
-                        if (roomCode.output.stdout !== "") setCodeOutput(roomCode.output.stdout);
-                        else if (roomCode.output.stderr !== "") setCodeOutput(roomCode.output.stderr);
-                    }
-                );
-
-                socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username }: { socketId: string; username: string }) => {
-                    toast.success(`${username !== data.username ? username : "You"} left the room`);
-                    setClients((prev) => prev.filter((client) => client.socketId !== socketId));
-                });
-
-                socketRef.current.on(ACTIONS.RUN_CODE, ({ output }: { output: any }) => {
-                    if (output.stdout !== "") setCodeOutput(output.stdout);
-                    else if (output.stderr !== "") setCodeOutput(output.stderr);
-                });
-
-                socketRef.current.on(ACTIONS.CODE_CHANGE, ({ updatedCode }: { updatedCode: string }) => {
-                    console.log(updatedCode)
-                    setCode(updatedCode)
-                });
-
-                socketRef.current.on(ACTIONS.CHANGE_LANG, ({ language }: { language: string }) => {
-                    setLanguage(language);
-                });
-
-            }
-        };
-
-        init();
-
-        return () => {
-            if (socketRef.current) {
-                socketRef.current.disconnect();
-                socketRef.current.off(ACTIONS.JOIN);
-                socketRef.current.off(ACTIONS.JOINED);
-                socketRef.current.off(ACTIONS.DISCONNECTED);
-                socketRef.current.off(ACTIONS.RUN_CODE);
-                socketRef.current.off(ACTIONS.CODE_CHANGE);
-                socketRef.current.off(ACTIONS.CHANGE_LANG);
-            }
-        };
+            return () => {
+                if (socketRef.current) {
+                    socketRef.current.disconnect();
+                    socketRef.current.off(ACTIONS.JOIN);
+                    socketRef.current.off(ACTIONS.JOINED);
+                    socketRef.current.off(ACTIONS.DISCONNECTED);
+                    socketRef.current.off(ACTIONS.RUN_CODE);
+                    socketRef.current.off(ACTIONS.CODE_CHANGE);
+                    socketRef.current.off(ACTIONS.CHANGE_LANG);
+                }
+            };
         }
-    }, [])
+    }, [data.roomId, data.username, router])
 
 
     const copyRoomId = async () => {
