@@ -12,7 +12,7 @@ import Terminal from './terminal';
 import { Button } from '@/components/ui/button';
 import { initSocket } from '../Socket';
 import { Socket } from 'socket.io-client';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
     Select,
     SelectContent,
@@ -20,7 +20,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import { ACTIONS } from '@/lib/Actions';
 import { Copy } from 'lucide-react';
 import {
@@ -28,7 +28,7 @@ import {
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 
 interface Client {
     socketId: string;
@@ -43,31 +43,21 @@ interface JoiningDataType {
         lang: string,
         code: string,
         output: {
-            cpuUsage: number,
-            exitCode: number,
-            memoryUsage: number,
-            signal: number,
-            stderr: string,
-            stdout: string
-        }
-    }
+            cpuUsage: number;
+            exitCode: number;
+            memoryUsage: number;
+            signal: number;
+            stderr: string;
+            stdout: string;
+        };
+    };
 }
-
-const Page: React.FC = () => {
-    const searchParams = useSearchParams();
-
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <ActualPage searchParams={searchParams} />
-        </Suspense>
-    );
-};
 
 const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }> = ({ searchParams }) => {
     const data = {
         roomId: searchParams.get('roomId') as string,
-        username: searchParams.get('username') as string
-    }
+        username: searchParams.get('username') as string,
+    };
     const socketRef = useRef<Socket | null>(null);
     const [clients, setClients] = useState<Client[]>([]);
     const [code, setCode] = useState<string>("for(let i = 0; i < 5; i++) console.log(i);");
@@ -76,18 +66,13 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
     const [codeOutput, setCodeOutput] = useState<string>('Run Code to see output.');
 
     const router = useRouter();
-
-    // To manage typing users
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const typingTimeouts = useRef<{ [key: string]: NodeJS.Timeout }>({});
-
-    // to stop reinitialization of connection, we've added this ref
     const initialized = useRef(false);
+
     useEffect(() => {
         if (!initialized.current) {
             initialized.current = true;
-            console.log("i fire once")
-
 
             const init = async () => {
                 socketRef.current = await initSocket();
@@ -131,18 +116,15 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
                         else if (output.stderr !== "") setCodeOutput(output.stderr);
                     });
 
-                    socketRef.current.on(ACTIONS.CODE_CHANGE, ({ updatedCode, user }: { updatedCode: string, user: string }) => {
-                        // Add user to typingUsers list
+                    socketRef.current.on(ACTIONS.CODE_CHANGE, ({ updatedCode, user }: { updatedCode: string; user: string }) => {
                         if (!typingUsers.includes(user)) {
                             setTypingUsers((prev) => [...prev, user]);
                         }
 
-                        // Clear any existing timeout for this user
                         if (typingTimeouts.current[user]) {
                             clearTimeout(typingTimeouts.current[user]);
                         }
 
-                        // Set a timeout to remove the user after 1 second of inactivity
                         typingTimeouts.current[user] = setTimeout(() => {
                             setTypingUsers((prev) => prev.filter((u) => u !== user));
                         }, 1000);
@@ -153,7 +135,6 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
                     socketRef.current.on(ACTIONS.CHANGE_LANG, ({ language }: { language: string }) => {
                         setLanguage(language);
                     });
-
                 }
             };
 
@@ -170,12 +151,10 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
                     socketRef.current.off(ACTIONS.CHANGE_LANG);
                 }
 
-                // Clean up typing timeouts
                 Object.values(typingTimeouts.current).forEach(clearTimeout);
             };
         }
-    }, [data.roomId, data.username, router, typingUsers])
-
+    }, [data.roomId, data.username, router, typingUsers]);
 
     const copyRoomId = async () => {
         try {
@@ -199,8 +178,8 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
     return (
         <div className="flex h-[calc(100vh-58px)] w-full">
             <div className="flex flex-col justify-between items-center border-r w-20 gap-2">
-                <div className="flex flex-col w-full h-full justify-start items-center gap-5 overflow-y-auto py-2 ">
-                    {clients.map((client, i) =>
+                <div className="flex flex-col w-full h-full justify-start items-center gap-5 overflow-y-auto py-2">
+                    {clients.map((client, i) => (
                         <TooltipProvider key={i}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -208,7 +187,6 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
                                         <Avatar>
                                             <AvatarFallback>{client.username[0].toUpperCase()}</AvatarFallback>
                                         </Avatar>
-                                        {/* Indicate typing status */}
                                         {typingUsers.includes(client.username) && (
                                             <div className='absolute z-10 right-[-12px] bottom-[-15px] bg-slate-500/50 text-[10px] rounded-lg p-1'>
                                                 typing...
@@ -221,7 +199,7 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
-                    )}
+                    ))}
                 </div>
                 <Button onClick={copyRoomId} variant="outline" size="icon" className='m-2'><Copy /></Button>
             </div>
@@ -259,6 +237,20 @@ const ActualPage: React.FC<{ searchParams: ReturnType<typeof useSearchParams> }>
             </div>
         </div>
     );
+};
+
+const Page: React.FC = () => {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <SearchPageContent />
+        </Suspense>
+    );
+};
+
+// This component directly uses `useSearchParams`
+const SearchPageContent: React.FC = () => {
+    const searchParams = useSearchParams();
+    return <ActualPage searchParams={searchParams} />;
 };
 
 export default Page;
