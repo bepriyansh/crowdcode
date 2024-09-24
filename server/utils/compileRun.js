@@ -1,26 +1,29 @@
-const { c, cpp, node, python, java } = require('compile-run');
+import { c, cpp, node, python, java } from 'compile-run';
 
-const compileRun = (code, language) => {
+const compileRun = async (code, language) => {
     let outputPromise;
 
-    if (language == "c") {
+    if (language === "c") {
         outputPromise = c.runSource(code);
-    } else if (language == "cpp") {
+    } else if (language === "cpp") {
         outputPromise = cpp.runSource(code);
-    } else if (language == "javascript") {
+    } else if (language === "javascript") {
         outputPromise = node.runSource(code);
-    } else if (language == "python") {
+    } else if (language === "python") {
         outputPromise = python.runSource(code);
-    } else if (language == "java") {
+    } else if (language === "java") {
         outputPromise = java.runSource(code);
+    } else {
+        return Promise.reject(new Error("Unsupported language"));
     }
 
     // Return the promise directly
-    return outputPromise.then((result) => {
+    try {
+        const result = await outputPromise;
         return result;
-    }).catch((err) => {
+    } catch (err) {
         return err;
-    });
+    }
 };
 
-module.exports = compileRun;
+export default compileRun;
