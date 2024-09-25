@@ -9,7 +9,7 @@ const io = new Server(server);
 
 setupSocket(io);
 
-app.get("/", (req, res) => res.send("Express on Vercel"));
+app.get("/", (req, res) => res.send("Express on Render"));
 
 const PORT = 8080;
 server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
